@@ -1,0 +1,159 @@
+
+D:\dev\otus\dz7>newman run ./"dz7-dev.postman_collection.json" 
+newman
+
+dz7-dev
+
+→ Получить ключ идемпотентности
+  GET http://arch.homework:80/idempotency-key [200 OK, 193B, 47ms]
+  ┌
+  │ {
+  │   key: '1648f4f8-a925-41eb-8167-f0243b5c93d7'
+  │ }
+  └
+  √  Get Idempotency Key
+
+→ Создать запрос с использованием ключа идемпотентности
+  POST http://arch.homework:80/order [201 Created, 345B, 15ms]
+  ┌
+  │ 'X-Idempotancy-Key:1648f4f8-a925-41eb-8167-f0243b5c93d
+  │ 7'
+  │ {
+  │   product_id: 1,
+  │   product_count: 2,
+  │   product_price: 10.5
+  │ }
+  │ {
+  │   id: '35f7b436-e9bb-4589-9df9-d9d4c4779a93',
+  │   product_id: 1,
+  │   product_count: 2,
+  │   product_price: 10.5,
+  │   created_at: '2023-06-02T08:13:17.580567478Z',
+  │   modified_at: '2023-06-02T08:13:17.580567578Z'
+  │ }
+  └
+  √  Create Order - attempt 1
+
+→ Повторно создать запрос с тем же самым ключом идемпотентности
+  POST http://arch.homework:80/order [201 Created, 339B, 9ms]
+  ┌
+  │ 'X-Idempotancy-Key:1648f4f8-a925-41eb-8167-f0243b5c93d
+  │ 7'
+  │ {
+  │   product_id: 1,
+  │   product_count: 2,
+  │   product_price: 10.5
+  │ }
+  │ {
+  │   id: '35f7b436-e9bb-4589-9df9-d9d4c4779a93',
+  │   product_id: 1,
+  │   product_count: 2,
+  │   product_price: 10.5,
+  │   created_at: '2023-06-02T08:13:17.580567Z',
+  │   modified_at: '2023-06-02T08:13:17.580567Z'
+  │ }
+  └
+  √  Create Order - attempt 2
+
+→ Получить заказ с версией
+  GET http://arch.homework:80/order/35f7b436-e9bb-4589-9df9-d9d4c4779a93 [200 OK, 343B, 7ms]
+  ┌
+  │ 'Etag: 0'
+  │ {
+  │   id: '35f7b436-e9bb-4589-9df9-d9d4c4779a93',
+  │   product_id: 1,
+  │   product_count: 2,
+  │   product_price: 10.5,
+  │   created_at: '2023-06-02T08:13:17.580567Z',
+  │   modified_at: '2023-06-02T08:13:17.580567Z'
+  │ }
+  └
+  √  Get Order with current
+
+→ Обновить заказ с актуальной версией
+  PUT http://arch.homework:80/order/35f7b436-e9bb-4589-9df9-d9d4c4779a93 [200 OK, 339B, 10ms]
+  ┌
+  │ 'If-Match: 0'
+  │ {
+  │   product_id: 123,
+  │   product_count: 9,
+  │   product_price: 18.3
+  │ }
+  │ {
+  │   id: '35f7b436-e9bb-4589-9df9-d9d4c4779a93',
+  │   product_id: 123,
+  │   product_count: 9,
+  │   product_price: 18.3,
+  │   created_at: '2023-06-02T08:13:17.580567Z',
+  │   modified_at: '2023-06-02T08:13:17.902455124Z'
+  │ }
+  └
+  √  Update Order (actual version)
+
+→ Обновить заказ с устаревшей версией
+  PUT http://arch.homework:80/order/35f7b436-e9bb-4589-9df9-d9d4c4779a93 [409 Conflict, 186B, 7ms]
+  ┌
+  │ 'If-Match: 0'
+  │ {
+  │   product_id: 67,
+  │   product_count: 4,
+  │   product_price: 11.8
+  │ }
+  │ { error: 'order verion conflict' }
+  └
+  √  Update Order (obsolete version)
+
+→ Получить заказ с последней версией
+  GET http://arch.homework:80/order/35f7b436-e9bb-4589-9df9-d9d4c4779a93 [200 OK, 345B, 7ms]
+  ┌
+  │ 'Etag: 1'
+  │ {
+  │   id: '35f7b436-e9bb-4589-9df9-d9d4c4779a93',
+  │   product_id: 123,
+  │   product_count: 9,
+  │   product_price: 18.3,
+  │   created_at: '2023-06-02T08:13:17.580567Z',
+  │   modified_at: '2023-06-02T08:13:17.902455Z'
+  │ }
+  └
+  √  Get Order with latest version
+
+→ Обновить заказ с последней версией
+  PUT http://arch.homework:80/order/35f7b436-e9bb-4589-9df9-d9d4c4779a93 [200 OK, 338B, 10ms]
+  ┌
+  │ 'If-Match: 1'
+  │ {
+  │   product_id: 67,
+  │   product_count: 4,
+  │   product_price: 11.8
+  │ }
+  │ {
+  │   id: '35f7b436-e9bb-4589-9df9-d9d4c4779a93',
+  │   product_id: 67,
+  │   product_count: 4,
+  │   product_price: 11.8,
+  │   created_at: '2023-06-02T08:13:17.580567Z',
+  │   modified_at: '2023-06-02T08:13:18.163333413Z'
+  │ }
+  └
+  √  Update Order (latest version)
+
+┌─────────────────────────┬──────────────────┬──────────────────┐
+│                         │         executed │           failed │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│              iterations │                1 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│                requests │                8 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│            test-scripts │               16 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│      prerequest-scripts │               13 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│              assertions │                8 │                0 │
+├─────────────────────────┴──────────────────┴──────────────────┤
+│ total run duration: 828ms                                     │
+├───────────────────────────────────────────────────────────────┤
+│ total data received: 1.21kB (approx)                          │
+├───────────────────────────────────────────────────────────────┤
+│ average response time: 14ms [min: 7ms, max: 47ms, s.d.: 12ms] │
+└───────────────────────────────────────────────────────────────┘

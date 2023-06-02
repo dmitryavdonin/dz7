@@ -1,0 +1,59 @@
+deployment:
+  replicaCount: "1"
+  env: dev
+  owner: DmitryAvdonin
+  port: 8000
+  loglevel: debug
+  container:
+    image: dmitryavdonin/order:latest
+
+database:
+  host: app-postgresql
+  user: postgres
+  pass: manager
+  name: order_service
+  port: 5432
+  timeout: 1
+  poolmax: 10
+
+postgresql:
+  image:
+    registry: docker.io
+    repository: bitnami/postgresql
+    tag: 15.2.0-debian-11-r16
+    digest: ""
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+    debug: false
+  auth:
+    enablePostgresUser: true
+    postgresPassword: "manager"
+    username: "postgres"
+    password: "manager"
+    database: "order_service"
+  architecture: standalone
+  containerPorts:
+    postgresql: 5432
+
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      serviceMonitorSelectorNilUsesHelmValues: false
+      serviceMonitorSelector: {}
+  prometheus-node-exporter:
+    hostRootFsMount: {
+      enabled: false
+    }
+
+ingress-nginx:
+  controller:
+    service:
+      ports:
+        http: 80
+        https: 443
+    metrics:
+      enabled: true
+    podAnnotations: {
+      prometheus.io/scrape: "true",
+      prometheus.io/port : "10254",
+    }
